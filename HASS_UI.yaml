@@ -1,46 +1,67 @@
 views:
-  - title: Home
+  - theme: Backend-selected
+    title: Home
+    badges: []
     cards:
-      - type: vertical-stack
+      - type: thermostat
+        entity: climate.gf_thermostat
+        name: Must use heat button below.
+      - type: custom:vertical-stack-in-card
+        horizontal: true
         cards:
-          - type: thermostat
-            entity: climate.gf_thermostat
-            name: Must use heat button below.
-          - type: horizontal-stack
+          - show_name: true
+            show_icon: true
+            type: button
+            tap_action:
+              action: toggle
+            entity: switch.pump_status
+            name: Pump
+          - type: custom:vertical-stack-in-card
             cards:
-              - show_name: true
+              - show_name: false
                 show_icon: true
                 type: button
                 tap_action:
                   action: toggle
-                entity: switch.pump_status
-                name: Pump
-              - type: vertical-stack
-                cards:
-                  - show_name: false
-                    show_icon: true
-                    type: button
-                    tap_action:
-                      action: toggle
-                    entity: button.up
-                  - show_name: false
-                    show_icon: true
-                    type: button
-                    tap_action:
-                      action: toggle
-                    entity: button.set
-                    icon: ''
-                  - show_name: false
-                    show_icon: true
-                    type: button
-                    tap_action:
-                      action: toggle
-                    entity: button.down
-              - show_name: true
+                entity: button.up
+              - show_name: false
                 show_icon: true
                 type: button
                 tap_action:
                   action: toggle
-                entity: switch.heat_power
-                name: Heat
+                entity: button.set
+                icon: ''
+              - show_name: false
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                entity: button.down
+          - show_name: true
+            show_icon: true
+            type: button
+            tap_action:
+              action: toggle
+            entity: switch.heat_power
+            name: Heat
+      - type: custom:vertical-stack-in-card
+        cards:
+          - show_name: false
+            show_icon: false
+            show_state: true
+            type: glance
+            entities:
+              - entity: input_text.blankspace
+              - entity: input_text.blankspace
+              - entity: sensor.gf_timer_minutes
+              - entity: sensor.gf_timer_seconds
+            title: Timer
+            columns: 4
+          - type: entities
+            entities:
+              - entity: number.gf2_set_timer
+                secondary_info: none
+                name: Set / Adjust
+                show_icon: false
+            show_header_toggle: false
 title: Grainfather
