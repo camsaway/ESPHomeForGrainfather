@@ -1,10 +1,3 @@
-#external_components:
-#  - source:
-#      type: git
-#      url: https://github.com/camsaway/esphome-temp
-#      ref: ble_write_action
-#    components: [ ble_client ]
-
 esphome:
   name: grainfather2
 
@@ -13,30 +6,13 @@ esp32:
   framework:
     type: arduino
 
-# Enable logging - NONE, ERROR, WARN, INFO, DEBUG (Default), VERBOSE, VERY_VERBOSE
 logger:
-  level: WARN
-  logs:
-    text_sensor: WARN
-    text_sensor.filter: WARN
-    mqtt: WARN
-    scheduler: WARN
-    ble_text_sensor: WARN
-#    esp32_ble_tracker: VERBOSE
-#    esp32_ble_client: DEBUG
-#    component: DEBUG
-#    sensor: DEBUG
+  level: DEBUG
 
 mqtt:
   broker: !secret homeassistantIP
   username: esphome
   password: !secret mqtt_password
-#  on_message:
-#    topic: helper/input_boolean/esphome_sleepoff_pool
-#    then:
-#      - binary_sensor.template.publish:
-#          id: prevent_deep_sleep
-#          state: !lambda 'if(x=="on"){return 1;}else{return 0;}'
 
 ota:
   password: !secret ota_password
@@ -44,10 +20,6 @@ ota:
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-#  manual_ip:     #Optional Manual IP
-#    static_ip: 192.168.1.84
-#    gateway: 192.168.1.250
-#    subnet: 255.255.255.0
   ap:
     ssid: "Grainfather2 Fallback Hotspot"
     password: "7fz6PVTCmEBm"
