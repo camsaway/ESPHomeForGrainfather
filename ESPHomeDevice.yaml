@@ -1,0 +1,461 @@
+#external_components:
+#  - source:
+#      type: git
+#      url: https://github.com/camsaway/esphome-temp
+#      ref: ble_write_action
+#    components: [ ble_client ]
+
+esphome:
+  name: grainfather2
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging - NONE, ERROR, WARN, INFO, DEBUG (Default), VERBOSE, VERY_VERBOSE
+logger:
+  level: WARN
+  logs:
+    text_sensor: WARN
+    text_sensor.filter: WARN
+    mqtt: WARN
+    scheduler: WARN
+    ble_text_sensor: WARN
+#    esp32_ble_tracker: VERBOSE
+#    esp32_ble_client: DEBUG
+#    component: DEBUG
+#    sensor: DEBUG
+
+mqtt:
+  broker: !secret homeassistantIP
+  username: esphome
+  password: !secret mqtt_password
+#  on_message:
+#    topic: helper/input_boolean/esphome_sleepoff_pool
+#    then:
+#      - binary_sensor.template.publish:
+#          id: prevent_deep_sleep
+#          state: !lambda 'if(x=="on"){return 1;}else{return 0;}'
+
+ota:
+  password: !secret ota_password
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+#  manual_ip:     #Optional Manual IP
+#    static_ip: 192.168.1.84
+#    gateway: 192.168.1.250
+#    subnet: 255.255.255.0
+  ap:
+    ssid: "Grainfather2 Fallback Hotspot"
+    password: "7fz6PVTCmEBm"
+
+captive_portal:
+    
+esp32_ble_tracker:
+
+ble_client:
+  - mac_address: AA:BB:CC:11:22:33  #SET YOUR PERSONAL GF BLUETOOTH MAC ADDRESS HERE
+    id: gf2_ble
+
+sensor:
+  - platform: template
+    name: "GF Current Temperature"
+    id: gf2_current_temperature
+    unit_of_measurement: "°C"
+  - platform: template
+    name: "GF Set Temperature"
+    id: gf2_set_temperature
+    unit_of_measurement: "°C"
+  - platform: template
+    name: "GF Timer Minutes"
+    id: gf2_timerminutes
+    unit_of_measurement: "min"
+  - platform: template
+    name: "GF Timer Seconds"
+    id: gf2_timerseconds
+    unit_of_measurement: "s"
+switch:
+  - platform: template
+    name: "Pump Status"
+    id: gf2_pump
+    icon: "mdi:pump"
+    turn_on_action:
+      - ble_client.ble_write:
+          id: gf2_ble
+          service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+          value: [0x4c, 0x31, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]
+    turn_off_action:
+      - ble_client.ble_write:
+          id: gf2_ble
+          service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+          value: [0x4c, 0x30, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]
+  - platform: template
+    name: "Heat Power"
+    id: gf2_heat
+    icon: "mdi:heat-wave"
+    turn_on_action:
+      then:
+        - ble_client.ble_write:
+            id: gf2_ble
+            service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+            characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+            value: [0x4b, 0x31, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]
+        - climate.control:
+            id: gf2_thermostat
+            mode: "HEAT"
+    turn_off_action:
+      then:
+        - ble_client.ble_write:
+            id: gf2_ble
+            service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+            characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+            value: [0x4b, 0x30, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]
+        - climate.control:
+            id: gf2_thermostat
+            mode: "OFF"
+
+button:
+  - platform: template
+    name: "Up"
+    id: gf2_up_button
+    icon: "mdi:arrow-up-drop-circle"
+    on_press:
+      - ble_client.ble_write:
+          id: gf2_ble
+          service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+          value: [0x55, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]    
+  - platform: template
+    name: "Down"
+    id: gf2_down_button
+    icon: "mdi:arrow-down-drop-circle"
+    on_press:
+      - ble_client.ble_write:
+          id: gf2_ble
+          service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+          value: [0x44, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]    
+  - platform: template
+    name: "Set"
+    id: gf2_set_button
+    icon: "mdi:alpha-s-circle-outline"
+    on_press:
+      - ble_client.ble_write:
+          id: gf2_ble
+          service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+          value: [0x54, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]    
+
+
+text_sensor:
+  - platform: ble_client
+    ble_client_id: gf2_ble
+    name: "GF Data"
+    icon: mdi:database-check-outline
+    service_uuid: '0000cdd0-0000-1000-8000-00805f9b34fb'
+    characteristic_uuid: '0003cdd1-0000-1000-8000-00805f9b0131'
+    notify: true
+    update_interval: 2s
+    internal: true
+    filters:
+      - lambda: |-
+          std::basic_string<char> retstr;
+          size_t delimiter;
+          float value;
+          retstr = x.substr(1,x.length());
+          if (x[0] == 'X') {
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            auto call = id(gf2_thermostat).make_call();
+            call.set_target_temperature(value);
+            call.perform();
+            id(gf2_set_temperature).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_current_temperature).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+          }
+          else if (x[0] == 'Y') {
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_heat).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_pump).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+          }
+          /*
+          else if (x[0] == 'W') {
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_power).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+          }
+          else if (x[0] == 'V') {
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_voltage).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+            delimiter = retstr.find(',');
+            id(gf2_temp_units).publish_state(retstr.substr(0,delimiter).c_str());
+            retstr = retstr.substr(delimiter+1,retstr.length());
+          }
+          else if (x[0] == 'C') {
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_boil_temperature).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+          }
+          else if (x[0] == 'F') {
+            delimiter = retstr.find(',');
+            id(gf2_version).publish_state(retstr.substr(0,delimiter).c_str());
+            retstr = retstr.substr(delimiter+1,retstr.length());
+          }
+          */
+          else if (x[0] == 'T') {
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            retstr = retstr.substr(delimiter+1,retstr.length());
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_timerminutes).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            retstr = retstr.substr(delimiter+1,retstr.length());
+            delimiter = retstr.find(',');
+            value = atof(retstr.substr(0,delimiter).c_str());
+            id(gf2_timerseconds).publish_state(value);
+            retstr = retstr.substr(delimiter+1,retstr.length());
+          }
+          /*
+          else if (x[0] == 'I') {
+            //Interaction Mode
+            retstr = 'I';
+          }
+          else if (x[0] == 'A') {
+            retstr = 'A';
+          }
+          else if (x[0] == 'E') {
+            retstr = 'E';
+          }
+          else if (x[0] == 'B') {
+            retstr = 'B';
+          }
+          */
+          else {
+            retstr = x;
+          }
+          return retstr;
+
+climate:
+  - platform: thermostat
+    icon: mdi:thermostat
+    name: "GF Thermostat"
+    id: gf2_thermostat
+    sensor: gf2_current_temperature
+    min_idle_time: 0s
+    idle_action:
+      - delay: 0s
+#      - switch.turn_off: gf2_heat   (Causes Loop if we control from here and the switch)
+    heat_action:
+      - delay: 0s
+#      - switch.turn_on: gf2_heat   (Causes Loop if we control from here and the switch)
+    min_heating_off_time: 0s
+    min_heating_run_time: 0s
+    visual:
+      min_temperature: 0
+      max_temperature: 100
+      temperature_step: 1
+    default_preset: Start
+    preset:
+      - name: Start
+        default_target_temperature_low: 61
+    target_temperature_change_action:
+      then:
+        - ble_client.ble_write:
+            id: gf2_ble
+            service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+            characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+            value: !lambda |-
+              ESP_LOGI("GFCode", "Received Target Temp: %f", id(gf2_thermostat).target_temperature);
+              int target = id(gf2_thermostat).target_temperature;
+              ESP_LOGI("GFCode", "Planned Target Temp: %i", target);
+              std::vector<uint8_t> GFcommand;
+              if (target > 99) {
+                ESP_LOGD("GFCode", "Writing 120C");
+                GFcommand = {0x24, 0x31, 0x32, 0x30, 0x2c, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20};
+              }
+              else if (target < 10) {
+                ESP_LOGI("GFCode", "Writing 0C");
+                GFcommand = {0x24, 0x30, 0x2c, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20};
+              }
+              else {
+                ESP_LOGI("GFCode", "Writing value: %i", target);
+                GFcommand = {0x24, 0x31, 0x2c, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20};
+                ESP_LOGV("GFCode", "Wrote first character");
+                switch((target/10)%10){
+                  case 0: GFcommand[1] = 0x30; break;
+                  case 1: GFcommand[1] = 0x31; break;
+                  case 2: GFcommand[1] = 0x32; break;
+                  case 3: GFcommand[1] = 0x33; break;
+                  case 4: GFcommand[1] = 0x34; break;
+                  case 5: GFcommand[1] = 0x35; break;
+                  case 6: GFcommand[1] = 0x36; break;
+                  case 7: GFcommand[1] = 0x37; break;
+                  case 8: GFcommand[1] = 0x38; break;
+                  case 9: GFcommand[1] = 0x39; break;
+                  default: GFcommand[1] = 0x20;
+                }
+                ESP_LOGV("GFCode", "Wrote second character");
+                switch(target % 10){
+                  case 0: GFcommand[2] = 0x30; break;
+                  case 1: GFcommand[2] = 0x31; break;
+                  case 2: GFcommand[2] = 0x32; break;
+                  case 3: GFcommand[2] = 0x33; break;
+                  case 4: GFcommand[2] = 0x34; break;
+                  case 5: GFcommand[2] = 0x35; break;
+                  case 6: GFcommand[2] = 0x36; break;
+                  case 7: GFcommand[2] = 0x37; break;
+                  case 8: GFcommand[2] = 0x38; break;
+                  case 9: GFcommand[2] = 0x39; break;
+                  default: GFcommand[2] = 0x20;
+                }
+                ESP_LOGV("GFCode", "Wrote third character");
+                GFcommand[3] = 0x2c;
+                ESP_LOGV("GFCode", "Wrote fourth character");
+                for (int i = 4; i < 19; i++) {
+                  GFcommand[i] = 0x20;
+                }
+                ESP_LOGD("GFCode", "Wrote padding");
+              }
+              return GFcommand;
+
+# HEX CONVERSIONS
+
+# ABCDEFGHIJKLMNOPQRSTUVWXYZ
+# 0123456789
+# $,  (space)
+# abcdefghijklmnopqrstuvwxyz
+
+# 0x41 0x42 0x43 0x44 0x45 0x46 0x47 0x48 0x49 0x4a 0x4b 0x4c 0x4d 0x4e 0x4f 0x50 0x51 0x52 0x53 0x54 0x55 0x56 0x57 0x58 0x59 0x5a
+# 0x30 0x31 0x32 0x33 0x34 0x35 0x36 0x37 0x38 0x39
+# 0x24 0x2c 0x20
+# 0x61 0x62 0x63 0x64 0x65 0x66 0x67 0x68 0x69 0x6a 0x6b 0x6c 0x6d 0x6e 0x6f 0x70 0x71 0x72 0x73 0x74 0x75 0x76 0x77 0x78 0x79 0x7a
+
+
+# ################################################################
+# # https://github.com/kingpulsar/Grainfather-Bluetooth-Protocol #
+# ################################################################
+
+# ==========================
+# Bluetooth Low Energy
+# ==========================
+# The system uses Bluetooth Low Energy for it's communiation.
+# Here's a list with the UUIDs for the grainfather system.
+
+# Device UUID: 0000cdd0-0000-1000-8000-00805f9b34fb
+# Read Characteristic UUID: 0003cdd1-0000-1000-8000-00805f9b0131
+# Write Characteristic UUID 0003cdd2-0000-1000-8000-00805f9b0131
+
+# ==============
+# Commands
+# ==============
+# The commands are sent to the grainfather system via Bluetooth. Commands are plain text.
+# All commands should be exactly 19 characters in length. Pad the end with spaces.
+# Anything between curly braces is a parameter.
+
+# Dismiss Boil Addition Alert: A
+# Cancel Timer: C
+# Decrement Target Temp: D
+# Cancel Or Finish Session: F
+# Pause Or Resume Timer: G
+# Toggle Heat: H
+# Interaction Complete: I
+# Turn Off Heat: K0
+# Turn On Heat: K1
+# Turn Off Pump: L0
+# Turn On Pump: L1
+# Get Current Boil Temp: M
+# Toggle Pump: P
+# Disconnect Manual Mode No Action: Q0
+# Disconnect And Cancel Session: Q1
+# Disconnect Auto Mode No Action: Q2
+# Press Set: T
+# Increment Target Temp: U
+# Disable Sparge Water Alert: V
+# Get Firmware Version: X
+# Reset Controller: Z
+# Reset Recipe Interrupted: !
+# Turn Off Sparge Counter Mode: d0
+# Turn On Sparge Counter Mode: d1
+# Turn Off Boil Control Mode: e0
+# Turn On Boil Control Mode: e1
+# Exit Manual Power Control Mode: f0
+# Enter Manual Power Control Mode: f1
+# Get Controller Voltage And Units: g
+# Turn Off Sparge Alert Mode: h0
+# Turn On Sparge Alert Mode: h1
+# Set Delayed Heat Function: B{Minutes},{Seconds},
+# Set Local Boil Temp To: E{Temperature},
+# Set Boil Time To: J{Minutes},
+# Skip To Step: N{Step Num},{Can Edit Time},{Time Left Minutes},{Time Left Seconds},{Skip Ramp},{Disable Add Grain},
+# Set New Timer: S{Minutes},
+# Set New Timer With Seconds: W{Minutes},{Seconds},
+# Set Target Temp To: ${Temperature},
+# Edit Controller Stored Temp And Time: a{Stage Num},{New Time},{New Temperature},
+# Set Sparge Progress To: b${Progress},
+# Skip To Interaction: c{Code},
+
+# ======================
+# Sending a recipe
+# ======================
+# Sending a recipe is a bit more complex. Commands need to be sent in the correct order:
+# R{Boil Time},{Mash Step Count},{Mash Volume},{Sparge Volume},
+# {Show Water Treatment Alert},{Show Sparge Counter},{Show Sparge Alert},{Delayed Session},{Skip Start},
+# {Recipe Name}
+# {Hop Stand Time},{Boil Addition Stop Count},{Boil Power Mode},{Strike Temp Mode},
+# Then for every 'boil stop' or 'unique boil addition time', send the time remaining in minutes.
+# Then if you're using strike temp mode, send: 0. (Not sure why, maybe it's not yet implemented)
+# Then for every 'mash stop' or 'step' in your mash, send: {Mash Step Temperature}:{Mash Step Duration} (Temperature in degC and Duration in Min)
+# If delayed session is enabled, send: {Delay Minutes}, {Delay Seconds}
+
+# Example:
+# R75,2,15.7,16.7, 75 minute boil, 2 mash steps, 15.6L mash volume, 16.7L sparge volume
+# 0,1,1,0,0, No water treatment alert, show sparge counter, show sparge alert, no delayed session, do not skip the start
+# SAISON Recipe name that will be displayed in the top left
+# 0,4,0,0, No hop stand, 4 boil addition stops, no boil power mode, no strike temp mode
+# 75, Boil addition stop 1, at 75 minutes boil time remaining
+# 45, Boil addition stop 2, at 45 minutes boil time remaining
+# 30, Boil addition stop 3, at 30 minutes boil time remaining
+# 10, Boil addition stop 4, at 10 Minutes boil time remaining
+# 65:60, Mash step 1, 65C for 60 minutes
+# 75:10, Mash step 2, 75C for 10 minutes
+
+# =====================
+# Notifications
+# =====================
+# The system sends it's current status every so often.
+# All notifications start with one of these characters: A, B, C, E, F, I, T, V, W, X, Y.
+# Notifications look like this:
+
+# X{Target Temperature},{Current temperature}
+# Y{Heat Power},{Pump Status},{Auto Mode Status},{Stage Ramp Status},{Interaction Mode Status},{Interaction Code},{Stage Number},{Delayed Heat Mode}
+# T{Timer Active},{Time Left Minutes},{Timer Total Start Time},{Time Left Seconds}
+# I{Interaction Code}
+# V{Voltage: 0=230V, 1=110V},{Units: 0=°F, 1=°C}
+# W{Heat Power Output Percentage},{Is Timer Paused},{Step Mash Mode},{Is Recipe Interrupted},{Manual Power Mode},{Sparge Water Alert Displayed}
+# C{Boil Temperature}
+# F{Firmware version}
+
+# Examples:
+# T0,0,0,0,ZZZZZZZZ
+# X61.0,22.8,ZZZZZZ 61.0C target temperature, 22.8C current temperature
+# W0,0,0,0,0,0,ZZZZ
