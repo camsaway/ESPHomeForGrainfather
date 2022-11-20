@@ -6,6 +6,7 @@ esp32:
   framework:
     type: arduino
 
+# Enable logging - NONE, ERROR, WARN, INFO, DEBUG (Default), VERBOSE, VERY_VERBOSE
 logger:
   level: DEBUG
 
@@ -29,7 +30,7 @@ captive_portal:
 esp32_ble_tracker:
 
 ble_client:
-  - mac_address: AA:BB:CC:11:22:33  #SET YOUR PERSONAL GF BLUETOOTH MAC ADDRESS HERE
+  - mac_address: AA:BB:CC:11:22:33  #Put your Grainfather MAC address here
     id: gf2_ble
 
 sensor:
@@ -122,7 +123,6 @@ button:
           service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
           characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
           value: [0x54, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20]    
-
 
 text_sensor:
   - platform: ble_client
@@ -309,6 +309,67 @@ climate:
                 ESP_LOGD("GFCode", "Wrote padding");
               }
               return GFcommand;
+
+number:
+  - platform: template
+    id: gf2_timersetmins
+    name: "GF2 Set Timer"
+    icon: mdi:timer
+    unit_of_measurement: mins
+    mode: slider
+    max_value: 90
+    min_value: 0
+    step: 1
+    initial_value: 0
+    optimistic: true
+    set_action:
+      - ble_client.ble_write:
+          id: gf2_ble
+          service_uuid: 0000cdd0-0000-1000-8000-00805f9b34fb
+          characteristic_uuid: 0003cdd2-0000-1000-8000-00805f9b0131
+          value: !lambda |-
+            ESP_LOGI("GFCode", "Received Set Timer: %f", x);
+            std::vector<uint8_t> GFcommand;
+            int target = x;
+            GFcommand = {0x57, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20};
+            ESP_LOGV("GFCode", "Wrote first character");
+            switch((target/10)%10){
+              case 0: GFcommand[1] = 0x30; break;
+              case 1: GFcommand[1] = 0x31; break;
+              case 2: GFcommand[1] = 0x32; break;
+              case 3: GFcommand[1] = 0x33; break;
+              case 4: GFcommand[1] = 0x34; break;
+              case 5: GFcommand[1] = 0x35; break;
+              case 6: GFcommand[1] = 0x36; break;
+              case 7: GFcommand[1] = 0x37; break;
+              case 8: GFcommand[1] = 0x38; break;
+              case 9: GFcommand[1] = 0x39; break;
+              default: GFcommand[1] = 0x20;
+            }
+            ESP_LOGV("GFCode", "Wrote second character");
+            switch(target % 10){
+              case 0: GFcommand[2] = 0x30; break;
+              case 1: GFcommand[2] = 0x31; break;
+              case 2: GFcommand[2] = 0x32; break;
+              case 3: GFcommand[2] = 0x33; break;
+              case 4: GFcommand[2] = 0x34; break;
+              case 5: GFcommand[2] = 0x35; break;
+              case 6: GFcommand[2] = 0x36; break;
+              case 7: GFcommand[2] = 0x37; break;
+              case 8: GFcommand[2] = 0x38; break;
+              case 9: GFcommand[2] = 0x39; break;
+              default: GFcommand[2] = 0x20;
+            }
+            ESP_LOGV("GFCode", "Wrote third character");
+            GFcommand[3] = 0x2c;
+            GFcommand[4] = 0x20;
+            GFcommand[5] = 0x2c;
+            ESP_LOGV("GFCode", "Wrote fourth character");
+            for (int i = 6; i < 19; i++) {
+              GFcommand[i] = 0x20;
+            }
+            ESP_LOGD("GFCode", "Wrote padding");
+            return GFcommand;
 
 # HEX CONVERSIONS
 
