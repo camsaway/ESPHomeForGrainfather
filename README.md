@@ -11,3 +11,7 @@ To Do:
 * Get a timer working
 * Dynamically detect GF device
 * Ability to load recipe steps
+
+
+# Credit for the extraction of all the GF Bluetooth commands
+https://github.com/kingpulsar/Grainfather-Bluetooth-Protocol
